@@ -1,5 +1,4 @@
-﻿using System;
-using FluentValidation;
+﻿using FluentValidation;
 using Wallet.Api.Models;
 using Wallet.Api.Models.Common;
 using Wallet.Api.Models.Enums;

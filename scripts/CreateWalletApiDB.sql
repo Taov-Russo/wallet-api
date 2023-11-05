@@ -22,7 +22,7 @@ CREATE TABLE [Transaction](
 	[TransactionId] [uniqueidentifier] NOT NULL,
 	[WalletId] [uniqueidentifier] NOT NULL,
 	[Amount] [decimal](9,2) NOT NULL,
-	[OperationType] [tinyint] NOT NULL,
+	[OperationType] [int] NOT NULL,
 	CONSTRAINT [PK_Transaction] PRIMARY KEY CLUSTERED 
 	(
 		[TransactionId] ASC

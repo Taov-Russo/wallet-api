@@ -7,5 +7,5 @@ public class WalletModel : JsonModel
 {
     public Guid WalletId { get; set; }
     public Guid UserId { get; set; }
-    public float Balance { get; set; }
+    public decimal Balance { get; set; }
 }

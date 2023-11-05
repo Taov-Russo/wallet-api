@@ -1,6 +1,7 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -10,6 +11,7 @@ using Wallet.Api.Data;
 using Wallet.Api.Domain;
 using Wallet.Api.Domain.Validation;
 using Wallet.Api.Models;
+using Wallet.Api.Models.DBContexts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +30,11 @@ builder.Services
 
     .AddTransient<IValidator<WalletCreateRequest>, WalletCreateValidator>()
     .AddTransient<IValidator<TransactionRequest>, WalletProcessTransactionValidator>();
+
+builder.Services.AddDbContext<WalletContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("Database"));
+});
 
 if (builder.Configuration.GetValue<bool>("EnableSwagger"))
     builder.Services.AddSwaggerGen(c =>

@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Data;
-using System.Data.SqlClient;
+using System.Linq;
 using System.Threading.Tasks;
-using Dapper;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using Wallet.Api.Models;
+using Wallet.Api.Models.DBContexts;
 using Wallet.Api.Models.Enums;
 
 namespace Wallet.Api.Data;
@@ -19,118 +18,71 @@ public interface IWalletRepository
 
 public class WalletRepository : IWalletRepository
 {
-    private readonly IConfiguration configuration;
+    private readonly WalletContext context;
 
-    public WalletRepository(IConfiguration configuration)
+    public WalletRepository(WalletContext context)
     {
-        this.configuration = configuration;
+        this.context = context;
     }
 
     public async Task<int> CreateWallet(Guid walletId, Guid userId)
     {
-        await using var connection = createConnection();
-        return await connection.ExecuteAsync(@"
-            INSERT INTO Wallet
-            (
-                WalletId,
-                UserId,
-                Balance
-            )
-            VALUES
-            (
-                @WalletId,
-                @UserId,
-                0
-            )"
-            , new
-            {
-                walletId,
-                userId
-            });
+        var wallet = new WalletModel
+        {
+            WalletId = walletId,
+            UserId = userId,
+            Balance = 0
+        };
+
+        context.Wallet.Add(wallet);
+        return await context.SaveChangesAsync();
     }
 
     public async Task<WalletModel> GetWallet(Guid walletId)
     {
-        await using var connection = createConnection();
-        return await connection.QueryFirstOrDefaultAsync<WalletModel>(@"
-            SELECT
-                WalletId,
-                UserId,
-                Balance
-            FROM Wallet
-            WHERE
-                WalletId = @WalletId"
-            , new
-            {
-                walletId
-            });
+        return await context.Wallet
+            .Where(w => w.WalletId == walletId)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<WalletModel> GetWalletByUserId(Guid userId)
     {
-        await using var connection = createConnection();
-        return await connection.QueryFirstOrDefaultAsync<WalletModel>(@"
-            SELECT
-                WalletId,
-                UserId,
-                Balance
-            FROM Wallet
-            WHERE
-                UserId = @UserId"
-            , new
-            {
-                userId
-            });
+        return await context.Wallet
+            .Where(w => w.UserId == userId)
+            .FirstOrDefaultAsync();
     }
 
     public async Task UpdateWalletBalance(Guid walletId, TransactionRequest request)
     {
-        await using var connection = createConnection();
-        await connection.OpenAsync();
-        await using var tx = connection.BeginTransaction(IsolationLevel.Serializable);
+        await using var transaction = await context.Database.BeginTransactionAsync();
+
         try
         {
-            var dynamicParameters = new DynamicParameters();
+            var wallet = await context.Wallet.FirstOrDefaultAsync(w => w.WalletId == walletId);
+            if (wallet is null)
+                throw new Exception("Wallet not found.");
 
-            dynamicParameters.Add("TransationId", request.TransactionId);
-            dynamicParameters.Add("WalletId", walletId);
-            dynamicParameters.Add("Amount", request.Amount);
-            dynamicParameters.Add("OperationType", request.OperationType);
+            wallet.Balance += request.OperationType == OperationType.Deposit
+                ? request.Amount
+                : -request.Amount;
 
-            await connection.ExecuteAsync($@"
-                UPDATE Wallet
-                SET
-                    Balance = Balance + IIF(@OperationType = {OperationType.Deposit:D}, @Amount, -@Amount)
-                WHERE
-                    WalletId = @WalletId", dynamicParameters, tx);
+            var transactionEntity = new TransactionModel
+            {
+                TransactionId = request.TransactionId,
+                WalletId = walletId,
+                Amount = request.Amount,
+                OperationType = request.OperationType
+            };
 
-            await connection.ExecuteAsync(@"
-                INSERT INTO [Transaction]
-                (
-                    TransactionId,
-                    WalletId,
-                    Amount,
-                    OperationType
-                )
-                VALUES
-                (
-                    @TransationId,
-                    @WalletId,
-                    @Amount,
-                    @OperationType
-                )", dynamicParameters, tx);
+            context.Transaction.Add(transactionEntity);
+            await context.SaveChangesAsync();
 
-            tx.Commit();
+            await transaction.CommitAsync();
         }
         catch (Exception ex)
         {
-            tx.Rollback();
-            throw new Exception("Failed to update balance.", ex);;
+            await transaction.RollbackAsync();
+            throw new Exception("Failed to update balance.", ex);
         }
-    }
-
-    private SqlConnection createConnection()
-    {
-        return new(configuration.GetConnectionString("Database"));
     }
 }

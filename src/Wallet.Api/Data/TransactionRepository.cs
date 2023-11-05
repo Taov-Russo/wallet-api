@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Data.SqlClient;
+using System.Linq;
 using System.Threading.Tasks;
-using Dapper;
-using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using Wallet.Api.Models;
+using Wallet.Api.Models.DBContexts;
 
 namespace Wallet.Api.Data;
 
@@ -14,33 +14,17 @@ public interface ITransactionRepository
 
 public class TransactionRepository : ITransactionRepository
 {
-    private readonly IConfiguration configuration;
+    private readonly WalletContext context;
 
-    public TransactionRepository(IConfiguration configuration)
+    public TransactionRepository(WalletContext context)
     {
-        this.configuration = configuration;
-    }
-
-    private SqlConnection createConnection()
-    {
-        return new(configuration.GetConnectionString("Database"));
+        this.context = context;
     }
 
     public async Task<TransactionModel> GetTransaction(Guid transactionId)
     {
-        await using var connection = createConnection();
-        return await connection.QueryFirstOrDefaultAsync<TransactionModel>(@"
-            SELECT
-                TransactionId,
-                WalletId,
-                Amount,
-                OperationType
-            FROM [Transaction]
-            WHERE
-                TransactionId = @TransactionId"
-            , new
-            {
-                transactionId
-            });
+        return await context.Transaction
+            .Where(t => t.TransactionId == transactionId)
+            .FirstOrDefaultAsync();
     }
 }
