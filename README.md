@@ -18,3 +18,11 @@ The wallet system provides the following functionality:
 - **Prevent negative balance:** The balance of a wallet cannot be negative.
 - **Prevent double spending:** A user can’t spend the same funds twice.
 - **REST APIs:** The client should interact with the service with REST APIs.
+
+
+## Using Dapper and Entity Framework
+This project demonstrates versatility by using two different Object-Relational Mapping (ORM) frameworks:
+- **Dapper:** The main branch of this project utilizes Dapper as the ORM framework for database operations. Dapper is a lightweight and efficient micro ORM for .NET, known for its speed and flexibility.
+- **Entity Framework (EF):** In a separate "feature/entity-framework" branch, Entity Framework is employed for the same project. EF is a powerful ORM framework provided by Microsoft, offering a wide range of features and robust database management capabilities.
+
+By implementing the project in both Dapper and EF, I showcase my ability to work with different ORM solutions, emphasizing my adaptability and versatility as a developer.
