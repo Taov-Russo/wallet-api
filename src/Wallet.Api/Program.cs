@@ -1,3 +1,5 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -6,19 +8,26 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using Wallet.Api.Data;
 using Wallet.Api.Domain;
+using Wallet.Api.Domain.Validation;
+using Wallet.Api.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog();
-builder.Services.AddRouting(x => x.LowercaseUrls = true);
-builder.Services.AddMvc();
+builder.Services
+    .AddRouting(x => x.LowercaseUrls = true)
+    .AddMvc()
+    .AddFluentValidation();
 
 var applicationName = builder.Environment.ApplicationName;
 
 builder.Services
     .AddTransient<IWalletManager, WalletManager>()
     .AddTransient<IWalletRepository, WalletRepository>()
-    .AddTransient<ITransactionRepository, TransactionRepository>();
+    .AddTransient<ITransactionRepository, TransactionRepository>()
+
+    .AddTransient<IValidator<WalletCreateRequest>, WalletCreateValidator>()
+    .AddTransient<IValidator<TransactionRequest>, WalletProcessTransactionValidator>();
 
 if (builder.Configuration.GetValue<bool>("EnableSwagger"))
     builder.Services.AddSwaggerGen(c =>

@@ -25,7 +25,7 @@ public class WalletsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(WalletCreateResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorModel<ErrorCode>), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> CreateWallet([FromBody] WalletCreateModel request)
+    public async Task<IActionResult> CreateWallet([FromBody] WalletCreateRequest request)
     {
         return MakeResponse(await manager.CreateWallet(request));
     }

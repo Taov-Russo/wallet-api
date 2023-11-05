@@ -11,7 +11,7 @@ namespace Wallet.Api.Domain;
 
 public interface IWalletManager
 {
-    Task<Response<WalletCreateResponse, ErrorModel<ErrorCode>>> CreateWallet(WalletCreateModel request);
+    Task<Response<WalletCreateResponse, ErrorModel<ErrorCode>>> CreateWallet(WalletCreateRequest request);
     Task<Response<EmptyModel, ErrorModel<ErrorCode>>> ProcessTransaction(Guid walletId, TransactionRequest request);
     Task<Response<WalletModel, ErrorModel<ErrorCode>>> GetWallet(Guid walletId);
 }
@@ -29,7 +29,7 @@ public class WalletManager : IWalletManager
         this.transactionRepository = transactionRepository;
     }
 
-    public async Task<Response<WalletCreateResponse, ErrorModel<ErrorCode>>> CreateWallet(WalletCreateModel request)
+    public async Task<Response<WalletCreateResponse, ErrorModel<ErrorCode>>> CreateWallet(WalletCreateRequest request)
     {
         var beginTime = DateTime.Now;
         try
