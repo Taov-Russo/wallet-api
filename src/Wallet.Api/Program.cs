@@ -44,7 +44,7 @@ if (!app.Environment.IsProduction())
     app.UseDeveloperExceptionPage();
 
 app.UseRouting();
-app.UseEndpoints(endpoints => endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}"));
+app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
 app.Lifetime.ApplicationStopped.Register(() =>
 {
     Log.Logger.Information($"{applicationName} has been stopped");
